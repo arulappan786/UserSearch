@@ -1,0 +1,367 @@
+﻿@{
+    ViewData["Title"] = "Search Parameters Entry Screen";
+}
+
+<div class="card">
+
+    <div class="card-header">
+        <div class="card-title">
+            <h2>Search Parameters Entry Screen</h2>
+            <br />
+            <p style="color:red;font-style: italic;">
+                * Please pay attention incase of input controls highlighted with red color,
+                <br>this means that it requires valid input values to be supplied.
+                <br><br> * Save Search Parameter button will be enabled only atleast 3 parameters are set.
+            </p>
+        </div>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    @Html.DropDownList("UserNameList", (IEnumerable<SelectListItem>)ViewBag.UserNameList, "--- Select User ---", new { @class = "form-control"})
+                    <input type="hidden" id="UserId" />
+                    <input type="hidden" id="Username" />
+                    <br />
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="ParamEntryDiv" style="visibility:hidden">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <table class="table table-bordered table-striped" id='tblParamsEntry'>
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <td>Field Name</td>
+                                <td>Data Type</td>
+                                <td>Control Type</td>
+                                <td>Contraint</td>
+                                <td>Action</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    @Html.DropDownList("UserFieldList", (IEnumerable<SelectListItem>)ViewBag.UserFieldList, "--- Select ---", new { @class = "form-control"})
+                                </td>
+                                <td>
+                                    @Html.DropDownList("DataType",Html.GetEnumSelectList(typeof(UserSearch.Data.DataType)) , "--- Select ---", new { @class = "form-control" })
+                                </td>
+                                <td>
+                                    @Html.DropDownList("ControlType",Html.GetEnumSelectList(typeof(UserSearch.Data.ControlType)) , "--- Select ---", new { @class = "form-control" })
+                                </td>
+                                <td>
+                                    @Html.DropDownList("Constraint",Html.GetEnumSelectList(typeof(UserSearch.Data.Constraint)) , "--- Select ---", new { @class = "form-control" })
+                                </td>
+                                <td width="20px"><input type="button" class="btn btn-primary" id="btnParamAdd" value="Add"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="ParamDisplayDiv" style="visibility:hidden">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <table class="table table-bordered table-striped" id='tblParams'>
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <td>Field Name</td>
+                                <td>Data Type</td>
+                                <td>Control Type</td>
+                                <td>Constraint</td>
+                                <td width="20px">Action</td>
+                            </tr>
+                        </thead>
+                        <tbody id="tblParamstblBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="FooterDiv" class="card-footer" style="visibility:hidden">
+        <div class="col-lg-6">
+            <div class="form-group">
+                <input type="button" class="btn btn-success" id="btnParamSave" value="Save Search Parameter">
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<style>
+    .error {
+        outline: 1px solid red;
+    }
+</style>
+
+<script type="text/javascript">
+
+    var UserSearchParam = [];
+    var SearchParamCount = 0;
+
+    // User List dropdown selection change event handler.
+    $('#UserNameList').change(function () {
+
+        var row = '';
+        UserSearchParam = [];
+
+        // Clear the error color, incase it was previousely set.
+        $('#UserFieldList').removeClass("error");
+        $('#DataType').removeClass("error");
+        $('#ControlType').removeClass("error");
+        $('#Constraint').removeClass("error");
+
+        // Set the hidden fields with the selected user dropdown values.
+        $('#UserId').val($(this).val());
+        $('#Username').val($('option:selected', $(this)).text());
+
+        // Show and hide the divs.
+        if ($('#UserId').val()) {
+            $("#ParamEntryDiv").css("visibility", "visible");
+            $("#ParamDisplayDiv").css("visibility", "visible");
+            $("#FooterDiv").css("visibility", "visible");
+        }
+        else {
+            $("#ParamEntryDiv").css("visibility", "hidden");
+            $("#ParamDisplayDiv").css("visibility", "hidden");
+            $("#FooterDiv").css("visibility", "hidden");
+        }
+
+        $.ajax({
+            type: "POST",
+            url: "/UserSearch/GetSearchParamsByUserId",
+            data: { "UserId": $('#UserId').val() },
+            success: function (response) {
+
+                if (response) {
+
+                    UserSearchParam = JSON.parse(response);
+                    SearchParamCount = UserSearchParam.length;
+
+                    if (SearchParamCount == 0) {
+                        ShowEmptyParamRow();
+                    }
+                    else {
+                        BuildUserSearchParamTable();
+                    }
+                }
+                else {
+                    SearchParamCount = UserSearchParam.length;
+                    ShowEmptyParamRow();
+                }
+            },
+            failure: function (response) { alert(response.responseText) },
+            error: function (response) { alert(response.responseText) },
+        });
+
+    });
+
+    // Add param button click event.
+    $('#btnParamAdd').click(function () {
+
+        var flgValid = true;
+        var FieldName = '';
+        var FieldName = '';
+        var DataType = '';
+        var ControlType = '';
+
+        if (!$('#UserFieldList').val()) {
+            flgValid = false;
+            $('#UserFieldList').addClass("error");
+        }
+        else {
+            $('#UserFieldList').removeClass("error");
+            FieldName = $('option:selected', $('#UserFieldList')).text();
+        }
+
+        if (!$('#DataType').val()) {
+            flgValid = false;
+            $('#DataType').addClass("error");
+        }
+        else {
+            $('#DataType').removeClass("error");
+            DataType = $('option:selected', $('#DataType')).text();
+        }
+
+        if (!$('#ControlType').val()) {
+            flgValid = false;
+            $('#ControlType').addClass("error");
+        }
+        else {
+            $('#ControlType').removeClass("error");
+            ControlType = $('option:selected', $('#ControlType')).text();
+        }
+
+        if (!$('#Constraint').val()) {
+            flgValid = false;
+            $('#Constraint').addClass("error");
+        }
+        else {
+            $('#Constraint').removeClass("error");
+            Constraint = $('option:selected', $('#Constraint')).text();
+        }
+
+        if (flgValid) {
+
+            if (!CheckIfSearchFieldPresent(FieldName)) {
+                $('#UserFieldList').removeClass("error");
+                UserSearchParam.push({ "FieldName": FieldName, "DataType": DataType, "ControlType": ControlType, "Constraint": Constraint });
+                SearchParamCount = UserSearchParam.length;
+                document.getElementById("btnParamSave").disabled = (SearchParamCount < 3);
+                BuildUserSearchParamTable();
+            }
+            else {
+                $('#UserFieldList').addClass("error");
+            }
+
+        }
+
+    });
+
+    // Save search parameters to the database.
+    $('#btnParamSave').click(function () {
+
+        $.ajax({
+            type: "POST",
+            url: "/UserSearch/SaveUserSearchParamEntry",
+            data: { "UserId": $('#UserId').val(), "SearchCriteria": JSON.stringify(UserSearchParam) },
+            success: function (response) {
+                alert('Search Parameter saved successfully...!')
+                document.getElementById("btnParamSave").disabled = (SearchParamCount < 3);
+            },
+            failure: function (response) { alert(response.responseText) },
+            error: function (response) { alert(response.responseText) },
+        });
+
+    });
+
+
+    function CheckIfSearchFieldPresent(FieldName) {
+
+        var flgPresent = false;
+        var col = [];
+
+        if (UserSearchParam) {
+
+            for (var i = 0; i < UserSearchParam.length; i++) {
+                for (var key in UserSearchParam[i]) {
+                    if (col.indexOf(key) === -1) {
+                        col.push(key);
+                    }
+                }
+            }
+
+            for (var i = 0; i < UserSearchParam.length; i++) {
+
+                if (UserSearchParam[i][col[0]] == FieldName) {
+                    flgPresent = true;
+                    break;
+                }
+
+            }
+        }
+
+        return flgPresent;
+    }
+
+    function BuildUserSearchParamTable() {
+
+        var row = '';
+        var col = [];
+        SearchParamCount = UserSearchParam.length;
+
+        if (SearchParamCount == 0) {
+            ShowEmptyParamRow();
+            return;
+        }
+
+        if (UserSearchParam) {
+
+            document.getElementById('tblParamstblBody').innerHTML = '';
+
+            for (var i = 0; i < UserSearchParam.length; i++) {
+                for (var key in UserSearchParam[i]) {
+                    if (col.indexOf(key) === -1) {
+                        col.push(key);
+                    }
+                }
+            }
+
+            for (var i = 0; i < UserSearchParam.length; i++) {
+                row += '<tr>'
+                for (var j = 0; j < col.length; j++) {
+                    row += '<td>' + UserSearchParam[i][col[j]] + '</td>'
+                }
+                row += '<td><input type="button" class="btn btn-danger" id="btnParamDelete" onclick="HandleDelete(this)" value="Delete"></td>'
+                row += '</tr>'
+            }
+            document.getElementById('tblParamstblBody').innerHTML = row;
+            document.getElementById("btnParamSave").disabled = (SearchParamCount < 3);
+        }
+
+    }
+
+    function ShowEmptyParamRow() {
+
+        var row = '';
+
+        SearchParamCount = UserSearchParam.length;
+
+        if (SearchParamCount == 0) {
+
+            document.getElementById('tblParamstblBody').innerHTML = ''
+            row = '';
+            row += '<tr>'
+            row += '<td colspan=5>No Search Parameters to Display.</td>'
+            row += '</tr>'
+            document.getElementById('tblParamstblBody').innerHTML = row;
+            document.getElementById("btnParamSave").disabled = (SearchParamCount < 3);
+        }
+        else {
+            document.getElementById("btnParamSave").disabled = (SearchParamCount < 3);
+        }
+    }
+
+    function HandleDelete(ctl) {
+
+        var result = confirm("Are you sure to delete the current row?");
+
+        if (result) {
+
+            // Identify the fieldname from the current deleting row.
+            var FieldName = ctl.parentNode.parentNode.cells[0].textContent;
+
+            // Remove the current table row.
+            $(ctl).parents("tr").remove();
+
+            // Remove the json array of the field.
+            $(UserSearchParam).each(function (index) {
+                if (UserSearchParam[index].FieldName == FieldName) {
+                    UserSearchParam.splice(index, 1);
+                    return false;
+                }
+            });
+
+            SearchParamCount = UserSearchParam.length;
+
+            if (SearchParamCount == 0) {
+                ShowEmptyParamRow()
+            };
+
+            document.getElementById("btnParamSave").disabled = (SearchParamCount < 3);
+        }
+
+        SearchParamCount = UserSearchParam.length;
+    }
+
+
+</script>

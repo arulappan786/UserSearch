@@ -1,0 +1,370 @@
+﻿@{
+    ViewData["Title"] = "User Search Screen";
+}
+
+<div class="card">
+
+    <div class="card-header">
+        <div class="card-title">
+            <h2>User Search Screen</h2>
+            <br />
+            <p style="color:red;font-style: italic;">
+                * Please pay attention incase of input controls highlighted with red color,
+                <br>this means that it requires valid input values to be supplied.
+                <br><br>* Search works on the contains basis for string field, not on the exact match.
+            </p>
+        </div>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="form-group">
+                    @Html.DropDownList("UserNameList", (IEnumerable<SelectListItem>)ViewBag.UserNameList, "--- Select User ---", new { @class = "form-control"})
+                    <input type="hidden" id="UserId" />
+                    <input type="hidden" id="Username" />
+                    <br />
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="ParamSearchDiv" style="visibility:hidden">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <table class="table table-bordered table-striped" id='tblParams'>
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <td>Field Name</td>
+                                <td>Field Value</td>
+                            </tr>
+                        </thead>
+                        <tbody id="tblParamSearchBody">
+                        </tbody>
+                    </table>
+                    <input type="button" class="btn btn-success" id="btnSearch" value="Search">
+                </div>
+            </div>
+        </div>
+        <br />
+        <div class="row" id="UserDisplayDiv" style="visibility:hidden">
+            <div class="col-lg-12">
+                <div class="form-group">
+                    <table class="table table-bordered table-striped" id='tblParams'>
+                        <thead class="bg-dark text-white">
+                            <tr>
+                                <td>UserId</td>
+                                <td>UserName</td>
+                                <td>Role</td>
+                                <td>LastLogin</td>
+                                <td>FName</td>
+                                <td>LName</td>
+                                <td>Department</td>
+                                <td>DOJ</td>
+                                <td>MgrId</td>
+                                <td>Seniority</td>
+                                <td>EmpCode</td>
+                            </tr>
+                        </thead>
+                        <tbody id="tblUserDisplayBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+<style>
+    .error {
+        outline: 1px solid red;
+    }
+</style>
+
+<script type="text/javascript">
+
+    var UserSearchParam = [];
+    var UserSearchResult = [];
+
+    var SearchParamCount = 0;
+    var UserSearchResultCount = 0;
+
+
+    // User List dropdown selection change event handler.
+    $('#UserNameList').change(function () {
+
+        var row = '';
+        UserSearchParam = [];
+
+        document.getElementById('tblParamSearchBody').innerHTML = '';
+
+        // Set the hidden fields with the selected user dropdown values.
+        $('#UserId').val($(this).val());
+        $('#Username').val($('option:selected', $(this)).text());
+
+        $("#ParamSearchDiv").css("visibility", "hidden");
+        $("#UserDisplayDiv").css("visibility", "hidden");
+
+        $.ajax({
+            type: "POST",
+            url: "/UserSearch/GetSearchParamsByUserId",
+            data: { "UserId": $('#UserId').val() },
+            success: function (response) {
+                $("#ParamSearchDiv").css("visibility", "visible");
+                if (response) {
+                    UserSearchParam = JSON.parse(response);
+                    SearchParamCount = UserSearchParam.length;
+                    if (SearchParamCount == 0) {
+                        ShowEmptySearchParamRow();
+                    }
+                    else {
+                        document.getElementById("btnSearch").disabled = false;
+                        BuildSearchParamInputControls();
+                    }
+                }
+                else {
+                    SearchParamCount = 0;
+                    ShowEmptySearchParamRow();
+                }
+            },
+            failure: function (response) { alert(response.responseText) },
+            error: function (response) { alert(response.responseText) },
+        });
+
+    });
+
+    $('#btnSearch').click(function () {
+
+        var flgValid = true;
+
+        var userid = null;
+        var username = null;
+        var role = null;
+        var lastlogin = null;
+        var fname = null;
+        var lname = null;
+        var department = null;
+        var doj = null;
+        var mgrid = null;
+        var seniority = null;
+        var empcode = null;
+
+        $(UserSearchParam).each(function (index) {
+
+            var fieldname = UserSearchParam[index].FieldName;
+            var control = document.getElementById('' + fieldname + '');
+
+            var controlValue = '';
+
+            if ($(control).prop('type') == 'select-one') {
+                controlValue = $(control).children("option").filter(":selected").text();
+            }
+            else {
+                controlValue = control.value;
+            }
+
+            if (control.value) {
+                if (fieldname == 'UserId') userid = controlValue;
+                if (fieldname == 'UserName') username = controlValue;
+                if (fieldname == 'Role') role = controlValue;
+                if (fieldname == 'LastLogin') lastlogin = controlValue;
+                if (fieldname == 'FName') fname = controlValue;
+                if (fieldname == 'LName') lname = control.value;
+                if (fieldname == 'Department') department = controlValue;
+                if (fieldname == 'DOJ') doj = controlValue;
+                if (fieldname == 'MgrId') mgrid = controlValue;
+                if (fieldname == 'Seniority') seniority = controlValue;
+                if (fieldname == 'EmpCode') empcode = controlValue;
+            }
+
+            if (UserSearchParam[index].Constraint == 'Mandatory') {
+                if (!control.value) {
+                    $(control).addClass("error");
+                    return flgValid = false;
+                }
+                else {
+                    $(control).removeClass("error");
+                }
+            }
+            else {
+                $(control).removeClass("error");
+            }
+
+        });
+
+        if (flgValid) {
+            $.ajax({
+                type: "POST",
+                url: "/UserSearch/SearchUserBySearchParams",
+                data: {
+                    "userid": userid, "username": username, "role": role, "lastlogin": lastlogin, "fname": fname, "lname": lname,
+                    "department": department, "doj": doj, "mgrid": mgrid, "seniority": seniority, "empcode": empcode
+                },
+                success: function (response) {
+
+                    $("#UserDisplayDiv").css("visibility", "visible");
+                    if (response) {
+                        UserSearchResult = JSON.parse(response);
+                        UserSearchResultCount = UserSearchResult.length;
+                        if (UserSearchResultCount == 0) {
+                            ShowEmptySearchResultRow();
+                        }
+                        else {
+                            BuildUserSearchResultTable();
+                        }
+                    }
+                    else {
+                        UserSearchResultCount = UserSearchResult.length;
+                        ShowEmptySearchResultRow();
+                    }
+
+                },
+                failure: function (response) { alert(response.responseText) },
+                error: function (response) { alert(response.responseText) },
+            });
+        }
+
+    });
+
+    function BuildSearchParamInputControls() {
+        var row = '';
+
+        if (SearchParamCount == 0) {
+            ShowEmptySearchParamRow();
+            return;
+        }
+
+        var ControlTypes = { "TextBox": "TextBox", "NumericTextBox": "NumericTextBox", "DropdownList": "DropdownList", "DateTime": "DateTime" };
+
+        if (UserSearchParam) {
+
+            $(UserSearchParam).each(function (index) {
+
+                row += "<tr>"
+                row += "<td>" + UserSearchParam[index].FieldName + "</td>"
+
+                switch (UserSearchParam[index].ControlType) {
+                    case ControlTypes.TextBox:
+                        row += "<td><input type='text' class='form-control' id=" + UserSearchParam[index].FieldName + "></td>"
+                        break;
+                    case ControlTypes.NumericTextBox:
+                        row += "<td><input type='number' value=0.00 min=0.00 max=9.99 step=0.01 class='form-control' id=" + UserSearchParam[index].FieldName + "></td>"
+                        break;
+                    case ControlTypes.DropdownList:
+                        row += "<td>" + GetDropDownOptions(UserSearchParam[index].FieldName) + "</td>"
+                        break;
+                    case ControlTypes.DateTime:
+                        row += "<td><input type='date' class='form-control' id=" + UserSearchParam[index].FieldName + "></td>"
+                        break;
+                    default:
+                        row += "<td><input type='text' class='form-control' id=" + UserSearchParam[index].FieldName + "></td>"
+                        break;
+                }
+                row += "</tr>"
+            });
+
+            document.getElementById('tblParamSearchBody').innerHTML = row;
+        }
+    }
+
+    function GetDropDownOptions(FieldName) {
+        var UserNameList = @Html.Raw(Json.Serialize(ViewBag.UserNameList));
+        var RoleList = @Html.Raw(Json.Serialize(ViewBag.RoleList));
+        var DepartmentList = @Html.Raw(Json.Serialize(ViewBag.DepartmentList));
+
+        var result = '';
+
+        result += '<select class="form-control" id=' + FieldName + ' name=' + FieldName + '>'
+        result += '<option value=""> --- Select ---</option>'
+
+        if (FieldName == "UserName") {
+            $(UserNameList).each(function (index) {
+                result += '<option value = ' + UserNameList[index].value + ' > ' + UserNameList[index].text + ' </option>'
+            });
+        }
+        else if (FieldName == 'Role') {
+            $(RoleList).each(function (index) {
+                result += '<option value = ' + RoleList[index].value + ' > ' + RoleList[index].text + ' </option>'
+            });
+        }
+        else if (FieldName == 'Department') {
+            $(DepartmentList).each(function (index) {
+                result += '<option value = ' + DepartmentList[index].value + ' > ' + DepartmentList[index].text + ' </option>'
+            });
+        }
+
+        result += '</select>'
+
+        return result;
+    }
+
+    function BuildUserSearchResultTable() {
+
+        var row = '';
+        var col = [];
+
+        if (UserSearchResult) {
+
+            document.getElementById('tblUserDisplayBody').innerHTML = '';
+
+            for (var i = 0; i < UserSearchResult.length; i++) {
+                for (var key in UserSearchResult[i]) {
+                    if (col.indexOf(key) === -1) {
+                        col.push(key);
+                    }
+                }
+            }
+
+            for (var i = 0; i < UserSearchResult.length; i++) {
+                row += '<tr>'
+                for (var j = 0; j < col.length; j++) {
+                    row += '<td>' + UserSearchResult[i][col[j]] + '</td>'
+                }
+                row += '</tr>'
+            }
+
+            document.getElementById('tblUserDisplayBody').innerHTML = row;
+
+        }
+        else {
+            ShowEmptySearchResultRow();
+        }
+    }
+
+    function ShowEmptySearchParamRow() {
+
+        var row = '';
+
+        if (SearchParamCount == 0) {
+            document.getElementById('tblParamSearchBody').innerHTML = ''
+            row = '';
+            row += '<tr>'
+            row += '<td colspan=2>No Search Param to Display.</td>'
+            row += '</tr>'
+            document.getElementById('tblParamSearchBody').innerHTML = row;
+
+            document.getElementById("btnSearch").disabled = true;
+        }
+    }
+
+    function ShowEmptySearchResultRow() {
+
+        var row = '';
+
+        UserSearchResultCount = UserSearchResult.length;
+
+        if (UserSearchResultCount == 0) {
+            document.getElementById('tblUserDisplayBody').innerHTML = ''
+            row = '';
+            row += '<tr>'
+            row += '<td colspan=11>No Search Results to Display.</td>'
+            row += '</tr>'
+            document.getElementById('tblUserDisplayBody').innerHTML = row;
+        }
+    }
+
+</script>
