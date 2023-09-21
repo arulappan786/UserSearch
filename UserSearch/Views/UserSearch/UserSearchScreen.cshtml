@@ -133,8 +133,8 @@
                     ShowEmptySearchParamRow();
                 }
             },
-            failure: function (response) { alert(response.responseText) },
-            error: function (response) { alert(response.responseText) },
+            failure: function (response) { toastr.error(response.responseText) },
+            error: function (response) { toastr.error(response.responseText) },
         });
 
     });
@@ -225,8 +225,8 @@
                     }
 
                 },
-                failure: function (response) { alert(response.responseText) },
-                error: function (response) { alert(response.responseText) },
+                failure: function (response) { toastr.error(response.responseText) },
+                error: function (response) { toastr.error(response.responseText) },
             });
         }
 

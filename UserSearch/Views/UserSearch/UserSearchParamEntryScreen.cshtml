@@ -161,8 +161,8 @@
                     ShowEmptyParamRow();
                 }
             },
-            failure: function (response) { alert(response.responseText) },
-            error: function (response) { alert(response.responseText) },
+            failure: function (response) { toastr.error(response.responseText) },
+            error: function (response) { toastr.error(response.responseText) },
         });
 
     });
@@ -237,12 +237,11 @@
             url: "/UserSearch/SaveUserSearchParamEntry",
             data: { "UserId": $('#UserId').val(), "SearchCriteria": JSON.stringify(UserSearchParam) },
             success: function (response) {
-                //alert('Search Parameter saved successfully...!')
                 toastr.success('Search Parameter saved successfully...!')
                 document.getElementById("btnParamSave").disabled = (SearchParamCount < 3);
             },
-            failure: function (response) { alert(response.responseText) },
-            error: function (response) { alert(response.responseText) },
+            failure: function (response) { toastr.error(response.responseText) },
+            error: function (response) { toastr.error(response.responseText) },
         });
 
     });
