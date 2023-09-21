@@ -1,10 +1,16 @@
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'UMS')
+BEGIN
+  CREATE DATABASE UMS;
+END;
+GO
+
 use UMS
 go
 
-drop table tbl_SearchParameters
+if object_id(N'dbo.tbl_SearchParameters', N'U') is not null drop table dbo.tbl_SearchParameters
 go
 
-drop table tbl_User
+if object_id(N'dbo.tbl_User', N'U') is not null drop table dbo.tbl_User
 go
 
 create table tbl_User

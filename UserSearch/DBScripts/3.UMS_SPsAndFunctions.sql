@@ -1,7 +1,7 @@
 use UMS
 go
 
-drop proc spGetUserNameList
+if object_id(N'dbo.spGetUserNameList', N'P') is not null drop procedure dbo.spGetUserNameList
 go
 
 create procedure spGetUserNameList
@@ -15,7 +15,7 @@ begin
 end
 go
 
-drop procedure spGetRoleList
+if object_id(N'dbo.spGetRoleList', N'P') is not null drop procedure dbo.spGetRoleList
 go
 
 create procedure spGetRoleList
@@ -31,7 +31,7 @@ begin
 end
 go
 
-drop procedure spGetDepartmentList
+if object_id(N'dbo.spGetDepartmentList', N'P') is not null drop procedure dbo.spGetDepartmentList
 go
 
 create procedure spGetDepartmentList
@@ -46,7 +46,7 @@ begin
 end
 go
 
-drop procedure spGetUserFields
+if object_id(N'dbo.spGetUserFields', N'P') is not null drop procedure dbo.spGetUserFields
 go
 
 create procedure spGetUserFields
@@ -62,8 +62,7 @@ begin
 end
 go
 
-
-drop procedure spUpsertSearchPrams
+if object_id(N'dbo.spUpsertSearchPrams', N'P') is not null drop procedure dbo.spUpsertSearchPrams
 go
 
 create procedure spUpsertSearchPrams
@@ -89,7 +88,7 @@ begin
 end
 go
 
-drop procedure [dbo].[spGetSearchParamsByUserId]
+if object_id(N'dbo.spGetSearchParamsByUserId', N'P') is not null drop procedure dbo.spGetSearchParamsByUserId
 go
 
 create procedure spGetSearchParamsByUserId
@@ -102,7 +101,7 @@ begin
 end
 go
 
-drop procedure spSearchUserBySearchParams
+if object_id(N'dbo.spSearchUserBySearchParams', N'P') is not null drop procedure dbo.spSearchUserBySearchParams
 go
 
 create procedure spSearchUserBySearchParams
