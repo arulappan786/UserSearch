@@ -96,6 +96,8 @@
 </div>
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js" integrity="sha512-lbwH47l/tPXJYG9AcFNoJaTMhGvYWhVM9YI43CT+uteTRRaiLCui8snIgyAN8XWgNjNhCqlAUdzZptso6OCoFQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <style>
     .error {
@@ -235,7 +237,8 @@
             url: "/UserSearch/SaveUserSearchParamEntry",
             data: { "UserId": $('#UserId').val(), "SearchCriteria": JSON.stringify(UserSearchParam) },
             success: function (response) {
-                alert('Search Parameter saved successfully...!')
+                //alert('Search Parameter saved successfully...!')
+                toastr.success('Search Parameter saved successfully...!')
                 document.getElementById("btnParamSave").disabled = (SearchParamCount < 3);
             },
             failure: function (response) { alert(response.responseText) },

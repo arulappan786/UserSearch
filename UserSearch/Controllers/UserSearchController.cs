@@ -39,6 +39,7 @@ namespace UserSearch.Controllers
         public ActionResult SaveUserSearchParamEntry(int UserId, string SearchCriteria) 
         {
             SqlHelper.UpsertSearchPrams(GetConnectionString(), UserId, SearchCriteria);
+            TempData["success"] = "User Search Parameter Saved Successfully...!";
             return RedirectToAction("UserSearchParamEntryScreen");
         }
 
