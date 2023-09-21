@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
 using System.Data;
-using System.Text;
+using UserSearch.Helpers;
 
 namespace UserSearch.Controllers
 {
@@ -34,13 +33,13 @@ namespace UserSearch.Controllers
                 cmdUserList.CommandType = CommandType.StoredProcedure;
                 SqlDataAdapter adpUserList = new SqlDataAdapter(cmdUserList);
                 adpUserList.Fill(dtUserList);
-                ViewBag.UserNameList = BindDropDown(dtUserList);
+                ViewBag.UserNameList = ConversionHelper.BindDropDown(dtUserList);
 
                 SqlCommand cmdUserFieldList = new SqlCommand("spGetUserFields", con);
                 cmdUserFieldList.CommandType = CommandType.StoredProcedure;
                 SqlDataAdapter adpUserFieldList = new SqlDataAdapter(cmdUserFieldList);
                 adpUserFieldList.Fill(dtUserFieldList);
-                ViewBag.UserFieldList = BindDropDown(dtUserFieldList);
+                ViewBag.UserFieldList = ConversionHelper.BindDropDown(dtUserFieldList);
                 
             }
             
@@ -96,21 +95,21 @@ namespace UserSearch.Controllers
                 cmdUserNameList.CommandType = CommandType.StoredProcedure;
                 SqlDataAdapter adpUserNameList = new SqlDataAdapter(cmdUserNameList);
                 adpUserNameList.Fill(dtUserNameList);
-                ViewBag.UserNameList = BindDropDown(dtUserNameList);
+                ViewBag.UserNameList = ConversionHelper.BindDropDown(dtUserNameList);
 
                 DataTable dtRoleList = new DataTable();
                 SqlCommand cmdRoleList = new SqlCommand("spGetRoleList", con);
                 cmdRoleList.CommandType = CommandType.StoredProcedure;
                 SqlDataAdapter adpRoleList = new SqlDataAdapter(cmdRoleList);
                 adpRoleList.Fill(dtRoleList);
-                ViewBag.RoleList = BindDropDown(dtRoleList);
+                ViewBag.RoleList = ConversionHelper.BindDropDown(dtRoleList);
 
                 DataTable dtDepartmentList = new DataTable();
                 SqlCommand cmdDepartmentList = new SqlCommand("spGetDepartmentList", con);
                 cmdDepartmentList.CommandType = CommandType.StoredProcedure;
                 SqlDataAdapter adpDepartmentList = new SqlDataAdapter(cmdDepartmentList);
                 adpDepartmentList.Fill(dtDepartmentList);
-                ViewBag.DepartmentList = BindDropDown(dtDepartmentList);
+                ViewBag.DepartmentList = ConversionHelper.BindDropDown(dtDepartmentList);
 
             }
 
@@ -233,77 +232,13 @@ namespace UserSearch.Controllers
                 SqlDataAdapter adpUserSearchList = new SqlDataAdapter(cmdUserSearchList);
                 adpUserSearchList.Fill(dtUserSearchList);
                 
-                result = ConvertIntoJson(dtUserSearchList);
+                result = ConversionHelper.ConvertIntoJson(dtUserSearchList);
             }
 
             return result;
         }
 
-        #endregion
-
-        #region Private Functions
-
-        private static SelectList BindDropDown(DataTable dt)
-        {
-            List<SelectListItem> lst = new List<SelectListItem>();
-
-            if (dt != null && dt.Rows.Count > 0)
-            {
-                foreach (DataRow item in dt.Rows)
-                {
-                    lst.Add(new SelectListItem()
-                    {
-                        Text = Convert.ToString(item[1]),
-                        Value = Convert.ToString(item[0])
-                    });
-                }
-            }            
-
-            return new SelectList(lst, "Value", "Text");
-        }
-
-        private static SelectList BindDropDownFromEnum(Array enumValues, Type objType )
-        {
-            
-        List<SelectListItem> lst = new List<SelectListItem>();
-
-            foreach (var val in enumValues)
-            {
-                lst.Add(new SelectListItem
-                {
-                    Text = Enum.GetName(objType, val),
-                    Value = val.ToString()
-                });
-            }
-
-            return new SelectList(lst, "Value", "Text");
-        }
-
-        public static string ConvertIntoJson(DataTable dt)
-        {
-            var jsonString = new StringBuilder();
-            if (dt.Rows.Count > 0)
-            {
-                jsonString.Append("[");
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    jsonString.Append("{");
-                    for (int j = 0; j < dt.Columns.Count; j++)
-                        jsonString.Append("\"" + dt.Columns[j].ColumnName + "\":\""
-                            + dt.Rows[i][j].ToString().Replace('"', '\"') + (j < dt.Columns.Count - 1 ? "\"," : "\""));
-
-                    jsonString.Append(i < dt.Rows.Count - 1 ? "}," : "}");
-                }
-                return jsonString.Append("]").ToString();
-            }
-            else
-            {
-                return "[]";
-            }
-        }
-
-
-        #endregion
+        #endregion        
 
     }
 }
